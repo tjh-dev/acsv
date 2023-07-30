@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt};
 
 use crate::DEFAULT_DELIMITER;
 
@@ -21,7 +21,7 @@ pub trait ColumnMap<'s, const DELIM: char = DEFAULT_DELIMITER> {
     ///
     fn column_names(&'s self) -> ColumnNames<'s>;
 
-    fn parse(src: &'s str) -> Result<Self, ()>
+    fn parse(src: &'s str) -> Result<Self, DuplicateColumnName>
     where
         Self: Sized,
     {
@@ -30,7 +30,7 @@ pub trait ColumnMap<'s, const DELIM: char = DEFAULT_DELIMITER> {
         for (idx, name) in src.split(DELIM).enumerate() {
             let name = name.trim();
             if names.contains(name) {
-                return Err(());
+                return Err(DuplicateColumnName(name));
             }
             names.insert(name);
             pairs.push((idx as ColumnIndex, name));
@@ -48,5 +48,14 @@ impl<'s> Iterator for ColumnNames<'s> {
     type Item = &'s str;
     fn next(&mut self) -> Option<Self::Item> {
         self.names.pop()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct DuplicateColumnName<'s>(&'s str);
+
+impl<'s> fmt::Display for DuplicateColumnName<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "`{}` is a duplicate column name", self.0)
     }
 }

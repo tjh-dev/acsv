@@ -23,10 +23,11 @@ impl<'s> ColumnMap<'s> for BTreeMap<&'s str, ColumnIndex> {
 #[cfg(test)]
 mod tests {
     use super::ColumnMap;
+    use crate::columnmap::DuplicateColumnName;
     use std::collections::BTreeMap;
 
     #[test]
-    fn column_names() {
+    fn can_iterate_column_names() {
         let columns = "alpha,beta,gamma,#delta,epsilon";
         let map = <BTreeMap<_, _> as ColumnMap>::parse(columns).unwrap();
 
@@ -40,7 +41,7 @@ mod tests {
     }
 
     #[test]
-    fn column_lookup() {
+    fn can_perform_column_lookup() {
         let columns =
             <BTreeMap<_, _> as ColumnMap>::parse("#datatype,string,dateTime:RFC3339").unwrap();
 
@@ -51,7 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_empty_str() {
+    fn can_parse_empty_str() {
         let columns = <BTreeMap<_, _> as ColumnMap>::parse("").unwrap();
 
         // The column set "" contains exactly one column with the name "".
@@ -62,6 +63,6 @@ mod tests {
     #[test]
     fn can_detect_duplicate_column_names() {
         let columns = <BTreeMap<_, _> as ColumnMap>::parse("a,b,a").unwrap_err();
-        assert_eq!(columns, ());
+        assert_eq!(columns, DuplicateColumnName("a"));
     }
 }
